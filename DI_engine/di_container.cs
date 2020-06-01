@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace DI_engine
 {
@@ -59,14 +61,34 @@ namespace DI_engine
 
         private T CreateInstance<T>(Type type) where T : class
         {
-            try
+            var constructor = this.FindMostConcreteConstructor(type);
+            var parameterTypes = constructor.GetParameters().Select((parameter, _) => parameter.ParameterType);
+            var parameterInstances = parameterTypes.Select((paramType, _) => this.CreateInstance<dynamic>(paramType));
+            return constructor.Invoke(parameterInstances.ToArray()) as T;
+        }
+
+        private ConstructorInfo FindMostConcreteConstructor(Type type)
+        {
+            ConstructorInfo[] constructors = type.GetConstructors();
+
+            if(constructors.Length == 0)
             {
-                return Activator.CreateInstance(type) as T;
+                throw new ArgumentException("There are no public constructor for the object");
             }
-            catch (MissingMethodException)
+            // var dependencyConstructors = Array.FindAll(constructors,
+            //     c => c.CustomAttributes.Select((attr, _) => attr.ToString()).Contains("DependencyConstrutor"));
+
+            var constructorsLength = constructors.Select((constructor, _ ) => constructor.GetParameters().Length);
+            int constructorsMaxLength = constructorsLength.Aggregate(Math.Max);
+            
+            var longestConstructors = Array.FindAll(constructors,
+                constructor => constructor.GetParameters().Length == constructorsMaxLength);
+
+            if(longestConstructors.Length >= 2)
             {
-                throw new ArgumentException("Cannot create an instance of interface or abstract class");
+                throw new ArgumentException("There are more than 1 constructors with the biggest number of parameters");
             }
+            return longestConstructors[0];
         }
 
         private Type GetResolvedType(Type type)

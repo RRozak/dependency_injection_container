@@ -36,19 +36,24 @@ namespace DI_engine
 
         public T Resolve<T>() where T : class
         {
-            if (this._ifSingleton.ContainsKey(typeof(T))
-                && this._ifSingleton[typeof(T)])
+            return GetInstance<T>(typeof(T), new Type[0]);
+        }
+
+        private T GetInstance<T>(Type type, IEnumerable<Type> history) where T : class
+        {
+            if (this._ifSingleton.ContainsKey(type)
+                && this._ifSingleton[type])
             {
-                if (!this._singletonInstances.ContainsKey(typeof(T)))
+                if (!this._singletonInstances.ContainsKey(type))
                 {
-                    this._singletonInstances[typeof(T)] =
-                        this.CreateInstance<T>(this.GetResolvedType(typeof(T)));
+                    this._singletonInstances[type] =
+                        this.CreateInstance<T>(this.GetResolvedType(type), history);
                 }
-                return this._singletonInstances[typeof(T)] as T;
+                return this._singletonInstances[type] as T;
             }
             else
             {
-                return this.CreateInstance<T>(this.GetResolvedType(typeof(T)));
+                return this.CreateInstance<T>(this.GetResolvedType(type), history);
             }
         }
 
@@ -59,11 +64,20 @@ namespace DI_engine
             this._singletonInstances.Remove(type);
         }
 
-        private T CreateInstance<T>(Type type) where T : class
+        private T CreateInstance<T>(Type type, IEnumerable<Type> history) where T : class
         {
+            if(history.Contains(type))
+            {
+                throw new ArgumentException("Cyclic dependency detected");
+            }
             var constructor = this.FindMostConcreteConstructor(type);
-            var parameterTypes = constructor.GetParameters().Select((parameter, _) => parameter.ParameterType);
-            var parameterInstances = parameterTypes.Select((paramType, _) => this.CreateInstance<dynamic>(paramType));
+
+            var parameterTypes = constructor.GetParameters().Select(
+                (parameter, _) => parameter.ParameterType);
+
+            var parameterInstances = parameterTypes.Select(
+                (paramType, _)  => this.GetInstance<object>(paramType, history.Append(type)));
+
             return constructor.Invoke(parameterInstances.ToArray()) as T;
         }
 
@@ -75,16 +89,42 @@ namespace DI_engine
             {
                 throw new ArgumentException("There are no public constructor for the object");
             }
-            // var dependencyConstructors = Array.FindAll(constructors,
-            //     c => c.CustomAttributes.Select((attr, _) => attr.ToString()).Contains("DependencyConstrutor"));
 
+            ConstructorInfo dependencyConstructor = this.FindDependencyConstructor(constructors);
+
+            if(dependencyConstructor != null)
+            {
+                return dependencyConstructor;
+            }
+            return this.FindLongestConstructor(constructors);
+        }
+
+        private ConstructorInfo FindDependencyConstructor(ConstructorInfo[] constructors)
+        {
+            var dependencyConstructors = Array.FindAll(constructors,
+                c => c.CustomAttributes.Select((attr, _) => attr.AttributeType).Contains(typeof(DependencyConstructor)));
+            
+            if(dependencyConstructors.Length > 1)
+            {
+                throw new ArgumentException("There are more than 1 public constructors"
+                                            + "with DependencyConstrutor attribute");
+            }
+            else if(dependencyConstructors.Length == 1)
+            {
+                return dependencyConstructors[0];
+            }
+            return null;
+        }
+
+        private ConstructorInfo FindLongestConstructor(ConstructorInfo[] constructors)
+        {
             var constructorsLength = constructors.Select((constructor, _ ) => constructor.GetParameters().Length);
             int constructorsMaxLength = constructorsLength.Aggregate(Math.Max);
             
             var longestConstructors = Array.FindAll(constructors,
                 constructor => constructor.GetParameters().Length == constructorsMaxLength);
 
-            if(longestConstructors.Length >= 2)
+            if(longestConstructors.Length > 1)
             {
                 throw new ArgumentException("There are more than 1 constructors with the biggest number of parameters");
             }
@@ -103,6 +143,9 @@ namespace DI_engine
             }
         }
     }
+
+    public class DependencyConstructor : Attribute
+    { }
 
     class Program
     {

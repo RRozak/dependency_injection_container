@@ -147,4 +147,51 @@ namespace DI_engine_tests
             this.cyclicClass = cyclicClass;
         }
     }
+
+    class ClassWithProperties
+    {
+        [DependencyProperty]
+        public Foo TheFoo {get; set;}
+
+        [DependencyProperty]
+        public Foo TheFoo2 {get;}
+
+        public Foo TheFoo3 {get; set;}
+
+        [DependencyProperty]
+        public Bar TheBar {get; set;}
+    }
+
+    public class ClassWithStringProperty
+    {
+        [DependencyProperty]
+        public string TheString {get; set;}
+    }
+
+    class ClassWithInterfaceAsProperty
+    {
+        [DependencyProperty]
+        public IBaz TheIbaz { get; set;}
+    }
+
+    class ClassWithTwoPropertiesOfSameType
+    {
+        [DependencyProperty]
+        public Foo TheFoo {get; set;}
+
+        [DependencyProperty]
+        public Foo TheFoo2 {get; set;}
+    }
+
+    class ClassWithCyclicProperty
+    {
+        [DependencyProperty]
+        public ClassWithCyclicProperty property {get; set;}
+    }
+
+    class ClassWithIndirectCyclicClassAsProperty
+    {
+        [DependencyProperty]
+        public IndirectCyclicClassA property {get; set;}
+    }
 }

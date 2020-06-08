@@ -36,7 +36,13 @@ namespace DI_engine
 
         public T Resolve<T>() where T : class
         {
-            return GetInstance<T>(typeof(T), new Type[0]);
+            T instance = GetInstance<T>(typeof(T), new Type[0]);
+
+            foreach(var property in this.GetInjectableProperties(instance))
+            {
+                this.InjectProperty(instance, property.GetSetMethod(), new Type[0]);
+            }
+            return instance;
         }
 
         private T GetInstance<T>(Type type, IEnumerable<Type> history) where T : class
@@ -64,6 +70,17 @@ namespace DI_engine
             this._singletonInstances.Remove(type);
         }
 
+        private IEnumerable<object> GetParameterInstances(MethodBase method, IEnumerable<Type> history)
+        {
+            var parameterTypes = method.GetParameters().Select(
+                (parameter, _) => parameter.ParameterType);
+
+            var parameterInstances = parameterTypes.Select(
+                (paramType, _)  => this.GetInstance<object>(paramType, history));
+            
+            return parameterInstances;
+        }
+
         private T CreateInstance<T>(Type type, IEnumerable<Type> history) where T : class
         {
             if(history.Contains(type))
@@ -72,11 +89,7 @@ namespace DI_engine
             }
             var constructor = this.FindMostConcreteConstructor(type);
 
-            var parameterTypes = constructor.GetParameters().Select(
-                (parameter, _) => parameter.ParameterType);
-
-            var parameterInstances = parameterTypes.Select(
-                (paramType, _)  => this.GetInstance<object>(paramType, history.Append(type)));
+            var parameterInstances = this.GetParameterInstances(constructor, history.Append(type));
 
             return constructor.Invoke(parameterInstances.ToArray()) as T;
         }
@@ -142,10 +155,27 @@ namespace DI_engine
                 return this.GetResolvedType(this._registeredType[type]);
             }
         }
-    }
 
-    public class DependencyConstructor : Attribute
-    { }
+        private PropertyInfo[] GetInjectableProperties<T>(T instance) where T : class
+        {
+            PropertyInfo[] properties = typeof(T).GetProperties();
+
+            var dependencyProperties = Array.FindAll(properties,
+                p => p.CustomAttributes.Select((attr, _) => attr.AttributeType).Contains(typeof(DependencyProperty)));
+
+            var injectableProperties = Array.FindAll(dependencyProperties,
+                p => p.GetSetMethod() != null);
+            
+            return injectableProperties;
+        }
+
+        private void InjectProperty<T>(T instance, MethodInfo setter, IEnumerable<Type> history)
+        {
+            var parameterInstances = this.GetParameterInstances(setter, history.Append(typeof(T)));
+            
+            setter.Invoke(instance, parameterInstances.ToArray());
+        }
+    }
 
     class Program
     {

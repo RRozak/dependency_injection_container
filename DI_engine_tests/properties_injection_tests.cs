@@ -141,7 +141,7 @@ namespace DI_engine_tests
 
             Assert.ThrowsException<ArgumentException>(() =>
             {
-                var a = c.Resolve<ClassWithCyclicProperty>();
+                var a = c.Resolve<ClassWithIndirectCyclicClassAsProperty>();
             });
         }
     }

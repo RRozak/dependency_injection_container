@@ -45,6 +45,15 @@ namespace DI_engine
             return instance;
         }
 
+        public void BuildUp<T>( T instance) where T : class
+        {
+            foreach(var property in this.GetInjectableProperties(instance))
+            {
+                if(property.GetValue(instance) == null)
+                    this.InjectProperty(instance, property.GetSetMethod(), new Type[0]);
+            }
+        }
+
         private T GetInstance<T>(Type type, IEnumerable<Type> history) where T : class
         {
             if (this._ifSingleton.ContainsKey(type)

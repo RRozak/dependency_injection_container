@@ -101,7 +101,7 @@ namespace DI_engine_tests
         {
             SimpleContainer c = new SimpleContainer();
 
-            
+
             ClassWithInterfaceAsProperty a = new ClassWithInterfaceAsProperty();
 
             c.RegisterType<IBaz, Baz>(false);

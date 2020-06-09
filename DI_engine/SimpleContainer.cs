@@ -38,18 +38,18 @@ namespace DI_engine
         {
             T instance = GetInstance<T>(typeof(T), new Type[0]);
 
-            foreach(var property in this.GetInjectableProperties(instance))
+            foreach (var property in InjectablePropertiesFinder.GetInjectableProperties(instance))
             {
                 this.InjectProperty(instance, property.GetSetMethod(), new Type[0]);
             }
             return instance;
         }
 
-        public void BuildUp<T>( T instance) where T : class
+        public void BuildUp<T>(T instance) where T : class
         {
-            foreach(var property in this.GetInjectableProperties(instance))
+            foreach (var property in InjectablePropertiesFinder.GetInjectableProperties(instance))
             {
-                if(property.GetValue(instance) == null)
+                if (property.GetValue(instance) == null)
                     this.InjectProperty(instance, property.GetSetMethod(), new Type[0]);
             }
         }
@@ -85,72 +85,22 @@ namespace DI_engine
                 (parameter, _) => parameter.ParameterType);
 
             var parameterInstances = parameterTypes.Select(
-                (paramType, _)  => this.GetInstance<object>(paramType, history));
-            
+                (paramType, _) => this.GetInstance<object>(paramType, history));
+
             return parameterInstances;
         }
 
         private T CreateInstance<T>(Type type, IEnumerable<Type> history) where T : class
         {
-            if(history.Contains(type))
+            if (history.Contains(type))
             {
                 throw new ArgumentException("Cyclic dependency detected");
             }
-            var constructor = this.FindMostConcreteConstructor(type);
+            var constructor = ConstructorFinder.FindMostConcreteConstructor(type);
 
             var parameterInstances = this.GetParameterInstances(constructor, history.Append(type));
 
             return constructor.Invoke(parameterInstances.ToArray()) as T;
-        }
-
-        private ConstructorInfo FindMostConcreteConstructor(Type type)
-        {
-            ConstructorInfo[] constructors = type.GetConstructors();
-
-            if(constructors.Length == 0)
-            {
-                throw new ArgumentException("There are no public constructor for the object");
-            }
-
-            ConstructorInfo dependencyConstructor = this.FindDependencyConstructor(constructors);
-
-            if(dependencyConstructor != null)
-            {
-                return dependencyConstructor;
-            }
-            return this.FindLongestConstructor(constructors);
-        }
-
-        private ConstructorInfo FindDependencyConstructor(ConstructorInfo[] constructors)
-        {
-            var dependencyConstructors = Array.FindAll(constructors,
-                c => c.CustomAttributes.Select((attr, _) => attr.AttributeType).Contains(typeof(DependencyConstructor)));
-            
-            if(dependencyConstructors.Length > 1)
-            {
-                throw new ArgumentException("There are more than 1 public constructors"
-                                            + "with DependencyConstrutor attribute");
-            }
-            else if(dependencyConstructors.Length == 1)
-            {
-                return dependencyConstructors[0];
-            }
-            return null;
-        }
-
-        private ConstructorInfo FindLongestConstructor(ConstructorInfo[] constructors)
-        {
-            var constructorsLength = constructors.Select((constructor, _ ) => constructor.GetParameters().Length);
-            int constructorsMaxLength = constructorsLength.Aggregate(Math.Max);
-            
-            var longestConstructors = Array.FindAll(constructors,
-                constructor => constructor.GetParameters().Length == constructorsMaxLength);
-
-            if(longestConstructors.Length > 1)
-            {
-                throw new ArgumentException("There are more than 1 constructors with the biggest number of parameters");
-            }
-            return longestConstructors[0];
         }
 
         private Type GetResolvedType(Type type)
@@ -165,23 +115,10 @@ namespace DI_engine
             }
         }
 
-        private PropertyInfo[] GetInjectableProperties<T>(T instance) where T : class
-        {
-            PropertyInfo[] properties = typeof(T).GetProperties();
-
-            var dependencyProperties = Array.FindAll(properties,
-                p => p.CustomAttributes.Select((attr, _) => attr.AttributeType).Contains(typeof(DependencyProperty)));
-
-            var injectableProperties = Array.FindAll(dependencyProperties,
-                p => p.GetSetMethod() != null);
-            
-            return injectableProperties;
-        }
-
         private void InjectProperty<T>(T instance, MethodInfo setter, IEnumerable<Type> history)
         {
             var parameterInstances = this.GetParameterInstances(setter, history.Append(typeof(T)));
-            
+
             setter.Invoke(instance, parameterInstances.ToArray());
         }
     }
@@ -190,7 +127,7 @@ namespace DI_engine
     {
         static void Main(string[] args)
         {
-            
+
         }
     }
 }

@@ -135,7 +135,7 @@ namespace DI_engine_tests
         public void ClassWithOneAttributedConstructor()
         {
             SimpleContainer c = new SimpleContainer();
-            
+
             c.RegisterInstance<string>("abc");
             ClassWithOneAttributedConstructor a = c.Resolve<ClassWithOneAttributedConstructor>();
 
@@ -146,7 +146,7 @@ namespace DI_engine_tests
         public void ClassWithTwoAttributedConstructors()
         {
             SimpleContainer c = new SimpleContainer();
-            
+
             c.RegisterInstance<string>("abc");
 
             Assert.ThrowsException<ArgumentException>(() =>

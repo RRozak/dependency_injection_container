@@ -198,7 +198,7 @@ namespace DI_engine_tests
 
             Assert.IsInstanceOfType(baz2, typeof(Baz));
             Assert.AreNotEqual(baz2, baz1);
-            Assert.AreNotEqual(baz3, baz2);    
+            Assert.AreNotEqual(baz3, baz2);
         }
 
         [TestMethod]
@@ -216,7 +216,7 @@ namespace DI_engine_tests
 
             Assert.IsInstanceOfType(baz2, typeof(Baz));
             Assert.AreNotEqual(baz2, baz1);
-            Assert.AreEqual(baz3, baz2);    
+            Assert.AreEqual(baz3, baz2);
         }
 
         [TestMethod]
@@ -233,7 +233,7 @@ namespace DI_engine_tests
             IBaz baz3 = c.Resolve<IBaz>();
 
             Assert.AreNotEqual(baz2, baz1);
-            Assert.AreEqual(baz3, baz2);    
+            Assert.AreEqual(baz3, baz2);
         }
 
         [TestMethod]
@@ -250,7 +250,7 @@ namespace DI_engine_tests
             Baz baz3 = c.Resolve<Baz>();
 
             Assert.AreNotEqual(baz2, baz1);
-            Assert.AreEqual(baz3, baz2);    
+            Assert.AreEqual(baz3, baz2);
         }
 
         [TestMethod]
@@ -265,9 +265,9 @@ namespace DI_engine_tests
             Baz baz2 = c.Resolve<Baz>();
 
             Baz baz3 = c.Resolve<Baz>();
-            
+
             Assert.AreNotEqual(baz2, baz1);
-            Assert.AreNotEqual(baz3, baz2);    
+            Assert.AreNotEqual(baz3, baz2);
         }
     }
 }

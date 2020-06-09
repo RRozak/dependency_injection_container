@@ -1,4 +1,3 @@
-using System;
 using DI_engine;
 
 namespace DI_engine_tests
@@ -19,7 +18,7 @@ namespace DI_engine_tests
     { }
 
     class Baz : IBaz
-    {}
+    { }
 
     abstract class AFoo
     { }
@@ -151,47 +150,47 @@ namespace DI_engine_tests
     class ClassWithProperties
     {
         [DependencyProperty]
-        public Foo TheFoo {get; set;}
+        public Foo TheFoo { get; set; }
 
         [DependencyProperty]
-        public Foo TheFoo2 {get;}
+        public Foo TheFoo2 { get; }
 
-        public Foo TheFoo3 {get; set;}
+        public Foo TheFoo3 { get; set; }
 
         [DependencyProperty]
-        public Bar TheBar {get; set;}
+        public Bar TheBar { get; set; }
     }
 
     public class ClassWithStringProperty
     {
         [DependencyProperty]
-        public string TheString {get; set;}
+        public string TheString { get; set; }
     }
 
     class ClassWithInterfaceAsProperty
     {
         [DependencyProperty]
-        public IBaz TheIbaz { get; set;}
+        public IBaz TheIbaz { get; set; }
     }
 
     class ClassWithTwoPropertiesOfSameType
     {
         [DependencyProperty]
-        public Foo TheFoo {get; set;}
+        public Foo TheFoo { get; set; }
 
         [DependencyProperty]
-        public Foo TheFoo2 {get; set;}
+        public Foo TheFoo2 { get; set; }
     }
 
     class ClassWithCyclicProperty
     {
         [DependencyProperty]
-        public ClassWithCyclicProperty property {get; set;}
+        public ClassWithCyclicProperty property { get; set; }
     }
 
     class ClassWithIndirectCyclicClassAsProperty
     {
         [DependencyProperty]
-        public IndirectCyclicClassA property {get; set;}
+        public IndirectCyclicClassA property { get; set; }
     }
 }
